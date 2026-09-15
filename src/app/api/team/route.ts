@@ -84,10 +84,20 @@ export async function POST(request: Request) {
   }
 
   // The handle_new_user trigger created a default-intern profile row.
-  await admin
+  const { error: updateError } = await admin
     .from('profiles')
     .update({ role: assignedRole, created_by: user.id })
     .eq('id', created.user.id);
+
+  if (updateError) {
+    // Roll back the auth user so we don't strand an intern-role account.
+    await admin.auth.admin.deleteUser(created.user.id);
+    console.error('profile update failed:', updateError);
+    return NextResponse.json(
+      { error: 'Account created but profile update failed: ' + updateError.message },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ ok: true, id: created.user.id });
 }
