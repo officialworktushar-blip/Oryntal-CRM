@@ -26,9 +26,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
   });
 
   if (error) {
-    const msg = error.message.includes('lead not found')
+    let msg = error.message.includes('lead not found')
       ? 'Lead not found.'
       : error.message;
+    if (msg.includes('schema cache')) {
+      msg =
+        'The update_lead_status database function is missing or not refreshed yet. Run the latest migration, then reload the PostgREST schema (NOTIFY pgrst, reload schema).';
+    }
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
