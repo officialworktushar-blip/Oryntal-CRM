@@ -145,8 +145,8 @@ export function LeadsTable({
   return (
     <div className="space-y-4">
       {/* Filter bar */}
-      <div className="grid gap-3 rounded-lg border bg-white p-3 sm:grid-cols-2 lg:grid-cols-6">
-        <div className="relative lg:col-span-2">
+      <div className="grid grid-cols-1 gap-3 rounded-lg border bg-white p-3 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="relative min-w-0 sm:col-span-2 lg:col-span-3">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
@@ -155,58 +155,65 @@ export function LeadsTable({
             className="pl-9"
           />
         </div>
-        <Select
-          value={status}
-          onValueChange={(v) => updateParams({ status: v })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {Object.entries(LEAD_STATUS_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={source} onValueChange={(v) => updateParams({ source: v })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Source" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All sources</SelectItem>
-            {LEAD_SOURCES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={assigned}
-          onValueChange={(v) => updateParams({ assigned: v })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Assigned to" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Everyone</SelectItem>
-            <SelectItem value="unassigned">Unassigned</SelectItem>
-            {members.map((i) => (
-              <SelectItem key={i.id} value={i.id}>
-                {i.full_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex items-center gap-2">
+        <div className="min-w-0">
+          <Select
+            value={status}
+            onValueChange={(v) => updateParams({ status: v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {Object.entries(LEAD_STATUS_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="min-w-0">
+          <Select value={source} onValueChange={(v) => updateParams({ source: v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Source" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All sources</SelectItem>
+              {LEAD_SOURCES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="min-w-0">
+          <Select
+            value={assigned}
+            onValueChange={(v) => updateParams({ assigned: v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Assigned to" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Everyone</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
+              {members.map((i) => (
+                <SelectItem key={i.id} value={i.id}>
+                  {i.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-6">
           <Input
             type="date"
             value={from}
             onChange={(e) => updateParams({ from: e.target.value })}
             aria-label="From date"
+            className="min-w-[8.5rem] flex-1"
           />
           <span className="text-xs text-muted-foreground">→</span>
           <Input
@@ -214,6 +221,7 @@ export function LeadsTable({
             value={to}
             onChange={(e) => updateParams({ to: e.target.value })}
             aria-label="To date"
+            className="min-w-[8.5rem] flex-1"
           />
           {hasFilters && (
             <Button
