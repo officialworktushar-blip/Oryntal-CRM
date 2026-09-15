@@ -26,6 +26,10 @@ const config: Config = {
           DEFAULT: '#ffffff',
           foreground: '#0d1230',
         },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
         muted: {
           DEFAULT: '#F1F3F5',
           foreground: '#6B7280',

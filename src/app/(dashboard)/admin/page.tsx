@@ -34,7 +34,7 @@ export default async function AdminPage({
     <div className="space-y-6">
       <PageHeader
         title="Admin Workspace"
-        description="Manage every lead, keep an eye on your interns' activity, and track your own pipeline."
+        description="Keep an eye on every lead your interns are working, manage unassigned leads, and track your own pipeline."
       />
       <TabNav items={TABS} active={tab} basePath="/admin" />
 
@@ -74,6 +74,16 @@ async function LeadsTab({
     fetchInterns(session.supabase),
   ]);
 
+  // Scope: admins manage unassigned leads, the intern pipeline (assigned by
+  // any admin or super admin), and their own leads — never another admin's or
+  // a super admin's personal leads.
+  const scopedLeads = leads.filter(
+    (l) =>
+      !l.assigned_to ||
+      l.assigned_to === session.profile.id ||
+      l.assigned_to_profile?.role === 'intern'
+  );
+
   const members = [...interns, session.profile];
 
   return (
@@ -82,7 +92,8 @@ async function LeadsTab({
         <div>
           <h2 className="font-display text-xl font-semibold">All leads</h2>
           <p className="text-sm text-muted-foreground">
-            {leads.length} shown · assign leads to your team or to yourself.
+            {scopedLeads.length} shown · unassigned, intern leads, and your own —
+            assign to your team or to yourself.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -91,7 +102,7 @@ async function LeadsTab({
         </div>
       </div>
       <LeadsTable
-        leads={leads}
+        leads={scopedLeads}
         members={members}
         canAssign
         canDelete={false}
@@ -146,7 +157,13 @@ async function fetchRecentActivities(supabase: Db): Promise<LeadActivity[]> {
     console.error('fetchRecentActivities error:', error);
     return [];
   }
-  return (data as LeadActivity[]) ?? [];
+  const rows = (data as LeadActivity[]) ?? [];
+  // Drop activities whose lead is hidden from this admin by RLS (the embedded
+  // `leads` relation comes back null for leads they can't see).
+  return rows.filter((a) => {
+    const leads = (a as LeadActivity & { leads?: unknown }).leads;
+    return leads != null;
+  });
 }
 
 function stringValue(value: string | string[] | undefined): string | undefined {
