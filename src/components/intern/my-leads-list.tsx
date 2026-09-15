@@ -58,17 +58,17 @@ export function MyLeadsList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="space-y-2">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search your leads…"
-            className="h-9 w-full rounded-md border border-input bg-white pl-9 pr-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-56"
+            className="h-9 w-full rounded-md border border-input bg-white pl-9 pr-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:max-w-xs"
           />
         </div>
-        <div className="scrollbar-thin flex flex-1 items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="scrollbar-thin flex w-full items-center gap-1.5 overflow-x-auto pb-1">
           {pills.map((pill) => (
             <button
               key={pill.key}
