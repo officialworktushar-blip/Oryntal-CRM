@@ -8,6 +8,18 @@ const PROTECTED_ROUTES = ['/super-admin', '/admin', '/intern'];
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // If Supabase env vars are missing at runtime (e.g. serverless deploy), don't
+  // turn every route into a 500 — let /login render so the client can surface
+  // a meaningful error instead.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    const url = request.nextUrl.clone();
+    if (url.pathname !== '/login') {
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    return response;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

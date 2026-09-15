@@ -64,7 +64,8 @@ export function LoginForm() {
       toast.success('Welcome back!');
       router.push(next && next.startsWith('/') ? next : home);
       router.refresh();
-    } catch {
+    } catch (err) {
+      console.error('login failed:', err);
       setError('Something went wrong. Please try again.');
       setLoading(false);
     }

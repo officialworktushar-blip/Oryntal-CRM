@@ -52,7 +52,7 @@ const PAGE_SIZE = 10;
 
 export function LeadsTable({
   leads,
-  interns,
+  members,
   canAssign,
   canDelete,
   basePath,
@@ -61,7 +61,7 @@ export function LeadsTable({
   emptyDescription = 'Try adjusting the filters, or add a new lead.',
 }: {
   leads: Lead[];
-  interns: Array<{ id: string; full_name: string }>;
+  members: Array<{ id: string; full_name: string }>;
   canAssign: boolean;
   canDelete: boolean;
   basePath: string;
@@ -194,7 +194,7 @@ export function LeadsTable({
           <SelectContent>
             <SelectItem value="all">Everyone</SelectItem>
             <SelectItem value="unassigned">Unassigned</SelectItem>
-            {interns.map((i) => (
+            {members.map((i) => (
               <SelectItem key={i.id} value={i.id}>
                 {i.full_name}
               </SelectItem>
@@ -332,7 +332,7 @@ export function LeadsTable({
                               >
                                 Unassigned
                               </DropdownMenuItem>
-                              {interns.map((intern) => (
+                              {members.map((intern) => (
                                 <DropdownMenuItem
                                   key={intern.id}
                                   onSelect={(e) => {

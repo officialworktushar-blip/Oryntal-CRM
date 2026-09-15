@@ -10,6 +10,7 @@ import {
 import { requireRole } from '@/lib/auth';
 import {
   computeAnalytics,
+  fetchAdmins,
   fetchAllLeads,
   fetchInterns,
   fetchLeads,
@@ -23,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LeadsTable } from '@/components/leads/leads-table';
 import { AddLeadDialog } from '@/components/leads/add-lead-dialog';
 import { CsvImportDialog } from '@/components/leads/csv-import-dialog';
+import { MyWorkSection } from '@/components/leads/my-work-section';
 import { AddUserDialog } from '@/components/team/add-user-dialog';
 import { UsersTable } from '@/components/team/users-table';
 import { LeadsByStatusBreakdown } from '@/components/analytics/leads-by-status-breakdown';
@@ -37,6 +39,7 @@ export const metadata: Metadata = { title: 'Super Admin' };
 
 const TABS = [
   { key: 'overview', label: 'Overview', href: '/super-admin?tab=overview' },
+  { key: 'my-work', label: 'My Work', href: '/super-admin?tab=my-work' },
   { key: 'team', label: 'Team', href: '/super-admin?tab=team' },
   { key: 'leads', label: 'All Leads', href: '/super-admin?tab=leads' },
   { key: 'analytics', label: 'Analytics', href: '/super-admin?tab=analytics' },
@@ -61,10 +64,21 @@ export default async function SuperAdminPage({
       <TabNav items={TABS} active={tab} basePath="/super-admin" />
 
       {tab === 'overview' && <OverviewTab />}
+      {tab === 'my-work' && <MyWorkTab />}
       {tab === 'team' && <TeamTab />}
       {tab === 'leads' && <LeadsTab defaultSearch={searchParams} />}
       {tab === 'analytics' && <AnalyticsTab />}
     </div>
+  );
+}
+
+async function MyWorkTab() {
+  const session = await requireRole(['super_admin']);
+  return (
+    <MyWorkSection
+      session={session}
+      emptyDescription="Leads you assign to yourself will show up here."
+    />
   );
 }
 
@@ -199,6 +213,10 @@ async function TeamTab() {
   );
 }
 
+function stringValue(value: string | string[] | undefined): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
 async function LeadsTab({
   defaultSearch,
 }: {
@@ -213,10 +231,13 @@ async function LeadsTab({
     to: stringValue(defaultSearch?.to),
   };
 
-  const [leads, interns] = await Promise.all([
+  const [leads, interns, admins] = await Promise.all([
     fetchLeads(session.supabase, filters),
     fetchInterns(session.supabase),
+    fetchAdmins(session.supabase),
   ]);
+
+  const members = [session.profile, ...admins, ...interns];
 
   return (
     <div className="space-y-4">
@@ -229,12 +250,12 @@ async function LeadsTab({
         </div>
         <div className="flex items-center gap-2">
           <CsvImportDialog />
-          <AddLeadDialog interns={interns} variant="gold" />
+          <AddLeadDialog members={members} variant="gold" />
         </div>
       </div>
       <LeadsTable
         leads={leads}
-        interns={interns}
+        members={members}
         canAssign
         canDelete
         basePath="/super-admin"
@@ -308,8 +329,4 @@ async function AnalyticsTab() {
       </div>
     </div>
   );
-}
-
-function stringValue(value: string | string[] | undefined): string | undefined {
-  return typeof value === 'string' ? value : undefined;
 }

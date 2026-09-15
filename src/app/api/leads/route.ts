@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { canAssignLeadTo } from '@/lib/assign';
 import type { Role } from '@/lib/types';
 
 export async function POST(request: Request) {
@@ -44,6 +45,25 @@ export async function POST(request: Request) {
 
   if (!name?.trim()) {
     return NextResponse.json({ error: 'Lead name is required.' }, { status: 400 });
+  }
+
+  // Enforce the same assignment rules as reassignment.
+  if (assigned_to) {
+    const { data: target } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', assigned_to)
+      .maybeSingle();
+    const targetRole = (target as { role?: Role } | null)?.role;
+    if (
+      !targetRole ||
+      !canAssignLeadTo(myRole, assigned_to, targetRole, user.id)
+    ) {
+      return NextResponse.json(
+        { error: 'You can only assign leads to an intern (or yourself).' },
+        { status: 400 }
+      );
+    }
   }
 
   const { data, error } = await supabase

@@ -31,11 +31,11 @@ const inputClass =
   'border-input bg-white focus-visible:ring-brand-accent/50';
 
 export function AddLeadDialog({
-  interns,
+  members,
   variant = 'outline',
   className,
 }: {
-  interns: Array<{ id: string; full_name: string }>;
+  members: Array<{ id: string; full_name: string }>;
   variant?: 'default' | 'outline' | 'gold';
   className?: string;
 }) {
@@ -112,8 +112,7 @@ export function AddLeadDialog({
         <DialogHeader>
           <DialogTitle>Add a new lead</DialogTitle>
           <DialogDescription>
-            Create a lead — leave it unassigned or hand it to an intern right
-            away.
+            Create a lead — keep it for yourself, or hand it to a team member.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -201,7 +200,7 @@ export function AddLeadDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="lead-assign">Assign to intern</Label>
+            <Label htmlFor="lead-assign">Assign to</Label>
             <Select
               value={form.assigned_to}
               onValueChange={(v) => set('assigned_to', v)}
@@ -215,9 +214,9 @@ export function AddLeadDialog({
                     <UserPlus className="h-3.5 w-3.5" /> Unassigned
                   </span>
                 </SelectItem>
-                {interns.map((intern) => (
-                  <SelectItem key={intern.id} value={intern.id}>
-                    {intern.full_name}
+                {members.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.full_name}
                   </SelectItem>
                 ))}
               </SelectContent>

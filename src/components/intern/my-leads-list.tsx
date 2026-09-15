@@ -15,7 +15,15 @@ import { LEAD_STATUS_LABELS, LEAD_STATUS_ORDER } from '@/lib/constants';
 import type { Lead, LeadStatus } from '@/lib/types';
 import { cn, formatDate } from '@/lib/utils';
 
-export function MyLeadsList({ leads }: { leads: Lead[] }) {
+export function MyLeadsList({
+  leads,
+  emptyTitle = 'No leads assigned yet',
+  emptyDescription = 'When your admins assign you leads, they will show up here.',
+}: {
+  leads: Lead[];
+  emptyTitle?: string;
+  emptyDescription?: string;
+}) {
   const [status, setStatus] = React.useState<'all' | LeadStatus>('all');
   const [query, setQuery] = React.useState('');
 
@@ -89,10 +97,10 @@ export function MyLeadsList({ leads }: { leads: Lead[] }) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={<Phone className="h-6 w-6" />}
-          title={leads.length === 0 ? 'No leads assigned yet' : 'No leads match'}
+          title={leads.length === 0 ? emptyTitle : 'No leads match'}
           description={
             leads.length === 0
-              ? 'When your admins assign you leads, they will show up here.'
+              ? emptyDescription
               : 'Try a different status or search term.'
           }
         />

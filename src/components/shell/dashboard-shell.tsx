@@ -41,12 +41,14 @@ function navFor(role: Role): NavItem[] {
           icon: LayoutDashboard,
           matchExact: true,
         },
+        { label: 'My Work', href: '/super-admin?tab=my-work', icon: CalendarClock },
         { label: 'Team', href: '/super-admin?tab=team', icon: Users },
         { label: 'All Leads', href: '/super-admin?tab=leads', icon: Phone },
         { label: 'Analytics', href: '/super-admin?tab=analytics', icon: BarChart3 },
       ];
     case 'admin':
       return [
+        { label: 'My Work', href: '/admin?tab=my-work', icon: CalendarClock },
         {
           label: 'Leads',
           href: '/admin?tab=leads',

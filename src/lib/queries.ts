@@ -69,6 +69,25 @@ export async function fetchInterns(supabase: Db): Promise<Profile[]> {
   return (data as Profile[]) ?? [];
 }
 
+/**
+ * Active admins. Only super admins may call this — RLS blocks admins from
+ * reading each other's profile rows.
+ */
+export async function fetchAdmins(supabase: Db): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('role', 'admin')
+    .eq('is_active', true)
+    .order('full_name');
+
+  if (error) {
+    console.error('fetchAdmins error:', error);
+    return [];
+  }
+  return (data as Profile[]) ?? [];
+}
+
 /** Count of activities created in the last 7 days. */
 export function countThisWeek(activities: Array<{ created_at: string }>) {
   const cutoff = new Date();

@@ -7,6 +7,7 @@ import { TabNav } from '@/components/shared/tab-nav';
 import { LeadsTable } from '@/components/leads/leads-table';
 import { AddLeadDialog } from '@/components/leads/add-lead-dialog';
 import { CsvImportDialog } from '@/components/leads/csv-import-dialog';
+import { MyWorkSection } from '@/components/leads/my-work-section';
 import { TeamActivityFeed } from '@/components/team/team-activity-feed';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 export const metadata: Metadata = { title: 'Admin' };
 
 const TABS = [
+  { key: 'my-work', label: 'My Work', href: '/admin?tab=my-work' },
   { key: 'leads', label: 'Leads', href: '/admin?tab=leads' },
   { key: 'activity', label: 'Team Activity', href: '/admin?tab=activity' },
 ];
@@ -32,13 +34,24 @@ export default async function AdminPage({
     <div className="space-y-6">
       <PageHeader
         title="Admin Workspace"
-        description="Manage every lead and keep an eye on your interns' activity."
+        description="Manage every lead, keep an eye on your interns' activity, and track your own pipeline."
       />
       <TabNav items={TABS} active={tab} basePath="/admin" />
 
+      {tab === 'my-work' && <MyWorkTab />}
       {tab === 'leads' && <LeadsTab defaultSearch={searchParams} />}
       {tab === 'activity' && <ActivityTab />}
     </div>
+  );
+}
+
+async function MyWorkTab() {
+  const session = await requireRole(['admin']);
+  return (
+    <MyWorkSection
+      session={session}
+      emptyDescription="Leads you assign to yourself will show up here."
+    />
   );
 }
 
@@ -61,23 +74,25 @@ async function LeadsTab({
     fetchInterns(session.supabase),
   ]);
 
+  const members = [...interns, session.profile];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="font-display text-xl font-semibold">All leads</h2>
           <p className="text-sm text-muted-foreground">
-            {leads.length} shown · assign unassigned leads to your interns.
+            {leads.length} shown · assign leads to your team or to yourself.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <CsvImportDialog />
-          <AddLeadDialog interns={interns} variant="gold" />
+          <AddLeadDialog members={members} variant="gold" />
         </div>
       </div>
       <LeadsTable
         leads={leads}
-        interns={interns}
+        members={members}
         canAssign
         canDelete={false}
         basePath="/admin"
