@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/auth';
 import { formatDate } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/page-header';
 import { MyWorkSection } from '@/components/leads/my-work-section';
+import { AddLeadDialog } from '@/components/leads/add-lead-dialog';
 
 export const metadata: Metadata = { title: 'Intern' };
 
@@ -24,6 +25,7 @@ export default async function InternPage() {
       <PageHeader
         title={`${await getGreeting()}, ${firstName}`}
         description={formatDate(new Date().toISOString())}
+        actions={<AddLeadDialog members={[]} variant="gold" assignToSelf />}
       />
       <MyWorkSection session={session} />
     </div>

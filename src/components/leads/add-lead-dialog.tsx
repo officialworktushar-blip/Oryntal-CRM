@@ -34,10 +34,12 @@ export function AddLeadDialog({
   members,
   variant = 'outline',
   className,
+  assignToSelf = false,
 }: {
   members: Array<{ id: string; full_name: string }>;
   variant?: 'default' | 'outline' | 'gold';
   className?: string;
+  assignToSelf?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -74,7 +76,7 @@ export function AddLeadDialog({
           company: form.company,
           source: form.source,
           priority: form.priority,
-          assigned_to: form.assigned_to || null,
+          assigned_to: assignToSelf ? null : form.assigned_to || null,
           notes: form.notes,
         }),
       });
@@ -112,7 +114,9 @@ export function AddLeadDialog({
         <DialogHeader>
           <DialogTitle>Add a new lead</DialogTitle>
           <DialogDescription>
-            Create a lead — keep it for yourself, or hand it to a team member.
+            {assignToSelf
+              ? 'Add a lead to your own pipeline — it stays visible to your admins.'
+              : 'Create a lead — keep it for yourself, or hand it to a team member.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -199,29 +203,31 @@ export function AddLeadDialog({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="lead-assign">Assign to</Label>
-            <Select
-              value={form.assigned_to}
-              onValueChange={(v) => set('assigned_to', v)}
-            >
-              <SelectTrigger id="lead-assign" className={inputClass}>
-                <SelectValue placeholder="Leave unassigned" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">
-                  <span className="flex items-center gap-2">
-                    <UserPlus className="h-3.5 w-3.5" /> Unassigned
-                  </span>
-                </SelectItem>
-                {members.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.full_name}
+          {!assignToSelf && (
+            <div className="space-y-1.5">
+              <Label htmlFor="lead-assign">Assign to</Label>
+              <Select
+                value={form.assigned_to}
+                onValueChange={(v) => set('assigned_to', v)}
+              >
+                <SelectTrigger id="lead-assign" className={inputClass}>
+                  <SelectValue placeholder="Leave unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">
+                    <span className="flex items-center gap-2">
+                      <UserPlus className="h-3.5 w-3.5" /> Unassigned
+                    </span>
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  {members.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="lead-notes" className={cn('flex items-center gap-1')}>

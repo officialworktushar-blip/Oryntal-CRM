@@ -14,7 +14,11 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .maybeSingle();
   const myRole = (me as { role: Role; is_active: boolean } | null)?.role;
-  if (!me || !me.is_active || (myRole !== 'super_admin' && myRole !== 'admin')) {
+  if (
+    !me ||
+    !me.is_active ||
+    (myRole !== 'super_admin' && myRole !== 'admin' && myRole !== 'intern')
+  ) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -47,17 +51,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Lead name is required.' }, { status: 400 });
   }
 
-  // Enforce the same assignment rules as reassignment.
-  if (assigned_to) {
+  // Interns always create leads assigned to themselves — this keeps them
+  // visible to them (own lead) and to admins (intern pipeline). They can never
+  // hand a lead to someone else.
+  let leadAssignedTo = assigned_to;
+  if (myRole === 'intern') {
+    leadAssignedTo = user.id;
+  } else if (leadAssignedTo) {
     const { data: target } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', assigned_to)
+      .eq('id', leadAssignedTo)
       .maybeSingle();
     const targetRole = (target as { role?: Role } | null)?.role;
     if (
       !targetRole ||
-      !canAssignLeadTo(myRole, assigned_to, targetRole, user.id)
+      !canAssignLeadTo(myRole, leadAssignedTo, targetRole, user.id)
     ) {
       return NextResponse.json(
         { error: 'You can only assign leads to an intern (or yourself).' },
@@ -77,7 +86,7 @@ export async function POST(request: Request) {
       status,
       priority,
       notes: notes || null,
-      assigned_to: assigned_to || null,
+      assigned_to: leadAssignedTo || null,
       next_follow_up_date: next_follow_up_date || null,
       created_by: user.id,
     })
