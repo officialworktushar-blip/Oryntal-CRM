@@ -2,13 +2,13 @@
 
 import * as React from 'react';
 import Image from 'next/image';
+import logoUrl from '@/logo.webp';
 import { BRAND } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
 /**
- * Oryntal brand mark. Renders /public/logo.png when present, otherwise falls
- * back to a gold-gradient monogram. Swap in your real logo by dropping a
- * `logo.png` into `/public` (or replace the fallback SVG below).
+ * Oryntal brand mark. Renders the logo shipped in src/logo.webp, and falls
+ * back to a gold-gradient monogram if it fails to load.
  */
 export function BrandLogo({
   size = 40,
@@ -22,7 +22,7 @@ export function BrandLogo({
   if (!missing) {
     return (
       <Image
-        src="/logo.png"
+        src={logoUrl}
         alt={`${BRAND.name} logo`}
         width={size}
         height={size}
