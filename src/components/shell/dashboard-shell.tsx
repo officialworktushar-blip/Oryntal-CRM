@@ -61,7 +61,7 @@ function navFor(role: Role): NavItem[] {
           icon: Phone,
         },
         { label: 'Team', href: '/admin?tab=team', icon: Users },
-        { label: 'Team Activity', href: '/admin?tab=activity', icon: BarChart3 },
+        { label: 'Analytics', href: '/admin?tab=analytics', icon: BarChart3 },
       ];
     case 'intern':
       return [

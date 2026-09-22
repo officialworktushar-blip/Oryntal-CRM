@@ -15,10 +15,9 @@ import {
   fetchInterns,
   fetchLeads,
   fetchSuperAdmins,
-  type Db,
 } from '@/lib/queries';
 import { canEditLead } from '@/lib/assign';
-import type { Lead, LeadActivity, ProfileWithLeadCount } from '@/lib/types';
+import type { Lead, ProfileWithLeadCount } from '@/lib/types';
 import { PageHeader } from '@/components/shared/page-header';
 import { TabNav } from '@/components/shared/tab-nav';
 import { StatCard } from '@/components/shared/stat-card';
@@ -27,11 +26,15 @@ import { LeadsTable } from '@/components/leads/leads-table';
 import { AddLeadDialog } from '@/components/leads/add-lead-dialog';
 import { CsvImportDialog } from '@/components/leads/csv-import-dialog';
 import { MyWorkSection } from '@/components/leads/my-work-section';
-import { TeamActivityFeed } from '@/components/team/team-activity-feed';
 import { UsersTable } from '@/components/team/users-table';
 import { AddUserDialog } from '@/components/team/add-user-dialog';
-import { EmptyState } from '@/components/shared/empty-state';
 import { LeadsByStatusBreakdown } from '@/components/analytics/leads-by-status-breakdown';
+import {
+  ConversionFunnel,
+  LeadsByStatusChart,
+  LeadsOverTimeChart,
+  LeadsPerInternChart,
+} from '@/components/analytics/charts';
 
 export const metadata: Metadata = { title: 'Admin' };
 
@@ -40,7 +43,7 @@ const TABS = [
   { key: 'my-work', label: 'My Work', href: '/admin?tab=my-work' },
   { key: 'leads', label: 'Leads', href: '/admin?tab=leads' },
   { key: 'team', label: 'Team', href: '/admin?tab=team' },
-  { key: 'activity', label: 'Team Activity', href: '/admin?tab=activity' },
+  { key: 'analytics', label: 'Analytics', href: '/admin?tab=analytics' },
 ];
 
 export default async function AdminPage({
@@ -65,7 +68,7 @@ export default async function AdminPage({
       {tab === 'my-work' && <MyWorkTab />}
       {tab === 'leads' && <LeadsTab defaultSearch={searchParams} />}
       {tab === 'team' && <TeamTab />}
-      {tab === 'activity' && <ActivityTab />}
+      {tab === 'analytics' && <AnalyticsTab />}
     </div>
   );
 }
@@ -289,57 +292,70 @@ async function TeamTab() {
   );
 }
 
-async function ActivityTab() {
+async function AnalyticsTab() {
   const session = await requireRole(['admin']);
-  const { supabase } = session;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const activities = await fetchRecentActivities(supabase);
+  const [allLeads, interns] = await Promise.all([
+    fetchAllLeads(session.supabase),
+    fetchInterns(session.supabase),
+  ]);
+  const analytics = computeAnalytics(allLeads, interns, monthStart);
+
+  const chartCard = 'rounded-lg border bg-white';
+  const chartTitle = 'font-display text-lg';
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="font-display text-xl font-semibold">Team activity</h2>
-        <p className="text-sm text-muted-foreground">
-          Latest calls, emails, WhatsApp messages, meetings, and notes logged
-          by your team.
-        </p>
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className={chartCard}>
+          <div className="border-b p-5">
+            <h2 className={chartTitle}>Leads by status</h2>
+          </div>
+          <div className="p-4">
+            <LeadsByStatusChart data={analytics.byStatus} />
+          </div>
+        </div>
+        <div className={chartCard}>
+          <div className="border-b p-5">
+            <h2 className={chartTitle}>Leads over time</h2>
+            <p className="text-xs text-muted-foreground">Last 30 days</p>
+          </div>
+          <div className="p-4">
+            <LeadsOverTimeChart data={analytics.overTime} />
+          </div>
+        </div>
       </div>
-      {activities.length === 0 ? (
-        <EmptyState
-          title="No activity yet"
-          description="Once interns start logging calls and follow-ups, you'll see the feed here."
-        />
-      ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <TeamActivityFeed activities={activities} />
-          </CardContent>
-        </Card>
-      )}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className={chartCard}>
+          <div className="border-b p-5">
+            <h2 className={chartTitle}>Leads per intern</h2>
+          </div>
+          <div className="p-4">
+            {interns.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No active interns yet.
+              </p>
+            ) : (
+              <LeadsPerInternChart data={analytics.perIntern} />
+            )}
+          </div>
+        </div>
+        <div className={chartCard}>
+          <div className="border-b p-5">
+            <h2 className={chartTitle}>Conversion funnel</h2>
+            <p className="text-xs text-muted-foreground">
+              New → Engaged → Interested → Converted
+            </p>
+          </div>
+          <div className="p-6">
+            <ConversionFunnel stages={analytics.funnel} />
+          </div>
+        </div>
+      </div>
     </div>
   );
-}
-
-async function fetchRecentActivities(supabase: Db): Promise<LeadActivity[]> {
-  const { data, error } = await supabase
-    .from('lead_activities')
-    .select(
-      '*, leads(id, name, status), profiles:profiles!lead_activities_user_id_fkey(id, full_name, role)'
-    )
-    .order('created_at', { ascending: false })
-    .limit(60);
-
-  if (error) {
-    console.error('fetchRecentActivities error:', error);
-    return [];
-  }
-  const rows = (data as LeadActivity[]) ?? [];
-  // Drop activities whose lead is hidden from this admin by RLS (the embedded
-  // `leads` relation comes back null for leads they can't see).
-  return rows.filter((a) => {
-    const leads = (a as LeadActivity & { leads?: unknown }).leads;
-    return leads != null;
-  });
 }
 
 function stringValue(value: string | string[] | undefined): string | undefined {
