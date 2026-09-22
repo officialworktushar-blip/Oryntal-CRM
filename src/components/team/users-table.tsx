@@ -32,9 +32,15 @@ import { formatDate, initials } from '@/lib/utils';
 export function UsersTable({
   users,
   currentUserId,
+  manageLevel = 'full',
 }: {
   users: ProfileWithLeadCount[];
   currentUserId: string;
+  /**
+   * 'full' (super admins): can change roles, deactivate / reactivate anyone.
+   * 'interns-only' (admins): can only deactivate / reactivate interns.
+   */
+  manageLevel?: 'full' | 'interns-only';
 }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState<string | null>(null);
@@ -101,6 +107,9 @@ export function UsersTable({
             {sorted.map((user) => {
               const isSelf = user.id === currentUserId;
               const isSuperAdmin = user.role === 'super_admin';
+              // Admins (interns-only mode) may only manage interns.
+              const canManage = manageLevel === 'full' || user.role === 'intern';
+              const readOnlyForViewer = !isSelf && !isSuperAdmin && !canManage;
               return (
                 <TableRow key={user.id}>
                   <TableCell>
@@ -170,7 +179,7 @@ export function UsersTable({
                           {user.full_name}
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {!isSelf && !isSuperAdmin && (
+                        {!isSelf && !isSuperAdmin && manageLevel === 'full' && (
                           <DropdownMenuItem
                             onSelect={(e) => {
                               e.preventDefault();
@@ -181,7 +190,7 @@ export function UsersTable({
                             Make Intern
                           </DropdownMenuItem>
                         )}
-                        {!isSelf && !isSuperAdmin && (
+                        {!isSelf && !isSuperAdmin && manageLevel === 'full' && (
                           <DropdownMenuItem
                             onSelect={(e) => {
                               e.preventDefault();
@@ -197,7 +206,7 @@ export function UsersTable({
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        {!isSelf && !isSuperAdmin && (
+                        {!isSelf && !isSuperAdmin && canManage && (
                           <DropdownMenuItem
                             className={
                               user.is_active ? 'text-destructive focus:text-destructive' : ''
@@ -220,6 +229,11 @@ export function UsersTable({
                         {isSelf && (
                           <DropdownMenuItem disabled>
                             You can&apos;t modify your own account
+                          </DropdownMenuItem>
+                        )}
+                        {readOnlyForViewer && (
+                          <DropdownMenuItem disabled>
+                            Only interns can be managed
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>

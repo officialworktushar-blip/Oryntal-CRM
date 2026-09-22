@@ -58,7 +58,7 @@ export function LeadsTable({
   basePath,
   searchParams,
   filterMembers,
-  canEditLead,
+  editableLeadIds,
   emptyTitle = 'No leads found',
   emptyDescription = 'Try adjusting the filters, or add a new lead.',
 }: {
@@ -70,13 +70,17 @@ export function LeadsTable({
   searchParams: Record<string, string | string[] | undefined>;
   /** People shown in the "Assigned to" filter. Defaults to `members`. */
   filterMembers?: Array<{ id: string; full_name: string }>;
-  /** Per-lead gate for the assign menu (e.g. read-only leads). */
-  canEditLead?: (lead: Lead) => boolean;
+  /** IDs of leads this user may edit; the assign menu is hidden for others. */
+  editableLeadIds?: string[];
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
   const filterOptions = filterMembers ?? members;
-  const isEditable = (lead: Lead) => (canEditLead ? canEditLead(lead) : true);
+  const editableIds = React.useMemo(
+    () => (editableLeadIds ? new Set(editableLeadIds) : null),
+    [editableLeadIds]
+  );
+  const isEditable = (lead: Lead) => !editableIds || editableIds.has(lead.id);
   const router = useRouter();
   const [page, setPage] = React.useState(0);
   const [query, setQuery] = React.useState('');

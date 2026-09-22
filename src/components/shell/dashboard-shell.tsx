@@ -48,14 +48,20 @@ function navFor(role: Role): NavItem[] {
       ];
     case 'admin':
       return [
+        {
+          label: 'Overview',
+          href: '/admin?tab=overview',
+          icon: LayoutDashboard,
+          matchExact: true,
+        },
         { label: 'My Work', href: '/admin?tab=my-work', icon: CalendarClock },
         {
           label: 'Leads',
           href: '/admin?tab=leads',
           icon: Phone,
-          matchExact: true,
         },
-        { label: 'Team Activity', href: '/admin?tab=activity', icon: Users },
+        { label: 'Team', href: '/admin?tab=team', icon: Users },
+        { label: 'Team Activity', href: '/admin?tab=activity', icon: BarChart3 },
       ];
     case 'intern':
       return [
