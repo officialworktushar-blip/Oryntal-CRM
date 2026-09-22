@@ -57,6 +57,7 @@ export function LeadsTable({
   canDelete,
   basePath,
   searchParams,
+  filterMembers,
   emptyTitle = 'No leads found',
   emptyDescription = 'Try adjusting the filters, or add a new lead.',
 }: {
@@ -66,9 +67,12 @@ export function LeadsTable({
   canDelete: boolean;
   basePath: string;
   searchParams: Record<string, string | string[] | undefined>;
+  /** People shown in the "Assigned to" filter. Defaults to `members`. */
+  filterMembers?: Array<{ id: string; full_name: string }>;
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
+  const filterOptions = filterMembers ?? members;
   const router = useRouter();
   const [page, setPage] = React.useState(0);
   const [query, setQuery] = React.useState('');
@@ -199,7 +203,7 @@ export function LeadsTable({
             <SelectContent>
               <SelectItem value="all">Everyone</SelectItem>
               <SelectItem value="unassigned">Unassigned</SelectItem>
-              {members.map((i) => (
+              {filterOptions.map((i) => (
                 <SelectItem key={i.id} value={i.id}>
                   {i.full_name}
                 </SelectItem>

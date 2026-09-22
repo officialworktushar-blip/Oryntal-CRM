@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { requireRole } from '@/lib/auth';
-import { fetchInterns, fetchLeads, type Db } from '@/lib/queries';
+import {
+  fetchInterns,
+  fetchLeads,
+  fetchSuperAdmins,
+  type Db,
+} from '@/lib/queries';
 import type { LeadActivity } from '@/lib/types';
 import { PageHeader } from '@/components/shared/page-header';
 import { TabNav } from '@/components/shared/tab-nav';
@@ -69,22 +74,27 @@ async function LeadsTab({
     to: stringValue(defaultSearch?.to),
   };
 
-  const [leads, interns] = await Promise.all([
+  const [leads, interns, superAdmins] = await Promise.all([
     fetchLeads(session.supabase, filters),
     fetchInterns(session.supabase),
+    fetchSuperAdmins(session.supabase),
   ]);
 
   // Scope: admins manage unassigned leads, the intern pipeline (assigned by
-  // any admin or super admin), and their own leads — never another admin's or
-  // a super admin's personal leads.
+  // any admin or super admin), leads assigned to a super admin (so they can
+  // review super admin work), and their own leads — never another admin's
+  // personal leads.
   const scopedLeads = leads.filter(
     (l) =>
       !l.assigned_to ||
       l.assigned_to === session.profile.id ||
-      l.assigned_to_profile?.role === 'intern'
+      l.assigned_to_profile?.role === 'intern' ||
+      l.assigned_to_profile?.role === 'super_admin'
   );
 
   const members = [...interns, session.profile];
+  // Everyone whose leads an admin can see — used to filter the table.
+  const filterMembers = [...interns, ...superAdmins, session.profile];
 
   return (
     <div className="space-y-4">
@@ -92,8 +102,8 @@ async function LeadsTab({
         <div>
           <h2 className="font-display text-xl font-semibold">All leads</h2>
           <p className="text-sm text-muted-foreground">
-            {scopedLeads.length} shown · unassigned, intern leads, and your own —
-            assign to your team or to yourself.
+            {scopedLeads.length} shown · unassigned, intern &amp; super admin
+            leads, and your own — assign to your team or to yourself.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -104,6 +114,7 @@ async function LeadsTab({
       <LeadsTable
         leads={scopedLeads}
         members={members}
+        filterMembers={filterMembers}
         canAssign
         canDelete={false}
         basePath="/admin"
@@ -125,7 +136,7 @@ async function ActivityTab() {
         <h2 className="font-display text-xl font-semibold">Team activity</h2>
         <p className="text-sm text-muted-foreground">
           Latest calls, emails, WhatsApp messages, meetings, and notes logged
-          by all interns.
+          by your team.
         </p>
       </div>
       {activities.length === 0 ? (
