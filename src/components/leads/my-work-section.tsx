@@ -56,7 +56,20 @@ export async function MyWorkSection({
     (l) => l.next_follow_up_date === today
   );
   const convertedCount = myLeads.filter((l) => l.status === 'converted').length;
-  const missingFollowUps = myLeads.filter(
+
+  // Missing follow-ups: every lead with a follow-up date that has already
+  // passed and wasn't rescheduled. RLS scopes this per role automatically —
+  // interns see only their own overdue leads, admins see the pipelines they
+  // manage (interns, super admins, unassigned + their own), super admins see
+  // the whole company.
+  const { data: datedLeadsData } = await supabase
+    .from('leads')
+    .select('*')
+    .not('next_follow_up_date', 'is', null)
+    .order('next_follow_up_date', { ascending: true })
+    .limit(1000);
+
+  const missingFollowUps = ((datedLeadsData ?? []) as Lead[]).filter(
     (l) =>
       l.next_follow_up_date &&
       l.next_follow_up_date < today &&
@@ -168,7 +181,8 @@ export async function MyWorkSection({
             Missing follow-ups
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Leads whose follow-up date has passed and hasn&apos;t been updated.
+            Leads whose follow-up date has passed and hasn&apos;t been updated
+            {session.profile.role !== 'intern' ? ' — across everyone you can see' : ''}.
           </p>
         </CardHeader>
         <CardContent>

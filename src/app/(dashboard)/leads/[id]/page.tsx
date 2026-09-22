@@ -11,6 +11,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { getAuthSession } from '@/lib/auth';
+import { canEditLead } from '@/lib/assign';
 import type { Lead, LeadActivity } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,10 @@ export default async function LeadDetailPage({
 
   const lead = leadData as Lead | null;
   if (!lead) notFound();
+
+  // Admins can read every lead but only edit unassigned, their own, or intern
+  // leads. Others' leads (other admins & super admins) are view-only for them.
+  const editable = canEditLead(session.profile.role, session.user.id, lead);
 
   const { data: activitiesData } = await supabase
     .from('lead_activities')
@@ -226,32 +231,51 @@ export default async function LeadDetailPage({
 
         {/* Right column */}
         <div className="space-y-6">
-          <Card className="bg-brand text-white">
-            <CardHeader>
-              <CardTitle className="font-display text-lg text-white">
-                Current status
-              </CardTitle>
-              <p className="text-xs text-white/50">
-                Click a status below to update it — changes are logged
-                automatically.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <StatusSelect leadId={lead.id} status={lead.status} />
-            </CardContent>
-          </Card>
+          {!editable && (
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              <div className="text-sm">
+                <p className="font-medium text-amber-900">
+                  View only
+                </p>
+                <p className="mt-0.5 text-amber-800/80">
+                  This lead is owned by another admin or a super admin. You can
+                  review it but not change its status or log activities.
+                </p>
+              </div>
+            </div>
+          )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display text-lg">Log an activity</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                Record a call, email, WhatsApp, meeting, or note.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ActivityForm leadId={lead.id} />
-            </CardContent>
-          </Card>
+          {editable && (
+            <Card className="bg-brand text-white">
+              <CardHeader>
+                <CardTitle className="font-display text-lg text-white">
+                  Current status
+                </CardTitle>
+                <p className="text-xs text-white/50">
+                  Click a status below to update it — changes are logged
+                  automatically.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <StatusSelect leadId={lead.id} status={lead.status} />
+              </CardContent>
+            </Card>
+          )}
+
+          {editable && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-lg">Log an activity</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Record a call, email, WhatsApp, meeting, or note.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <ActivityForm leadId={lead.id} />
+              </CardContent>
+            </Card>
+          )}
 
           <div className="rounded-lg border bg-white p-4">
             <div className="flex items-center gap-2">

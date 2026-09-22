@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import { requireRole } from '@/lib/auth';
 import {
+  fetchAdmins,
   fetchInterns,
   fetchLeads,
   fetchSuperAdmins,
   type Db,
 } from '@/lib/queries';
-import type { LeadActivity } from '@/lib/types';
+import { canEditLead } from '@/lib/assign';
+import type { Lead, LeadActivity } from '@/lib/types';
 import { PageHeader } from '@/components/shared/page-header';
 import { TabNav } from '@/components/shared/tab-nav';
 import { LeadsTable } from '@/components/leads/leads-table';
@@ -74,27 +76,30 @@ async function LeadsTab({
     to: stringValue(defaultSearch?.to),
   };
 
-  const [leads, interns, superAdmins] = await Promise.all([
+  const [leads, interns, admins, superAdmins] = await Promise.all([
     fetchLeads(session.supabase, filters),
     fetchInterns(session.supabase),
+    fetchAdmins(session.supabase),
     fetchSuperAdmins(session.supabase),
   ]);
 
-  // Scope: admins manage unassigned leads, the intern pipeline (assigned by
-  // any admin or super admin), leads assigned to a super admin (so they can
-  // review super admin work), and their own leads — never another admin's
-  // personal leads.
+  // Scope: admins can READ every lead — unassigned, the intern pipeline
+  // (assigned by any admin or super admin), other admins' and super admins'
+  // personal leads (so they can review each other's work), and their own.
+  // Editing stays limited to what they manage (unassigned / own / intern).
   const scopedLeads = leads.filter(
     (l) =>
       !l.assigned_to ||
       l.assigned_to === session.profile.id ||
       l.assigned_to_profile?.role === 'intern' ||
+      l.assigned_to_profile?.role === 'admin' ||
       l.assigned_to_profile?.role === 'super_admin'
   );
 
+  // Who a lead can be HANDED to (assign) — interns and yourself.
   const members = [...interns, session.profile];
   // Everyone whose leads an admin can see — used to filter the table.
-  const filterMembers = [...interns, ...superAdmins, session.profile];
+  const filterMembers = [...interns, ...admins, ...superAdmins, session.profile];
 
   return (
     <div className="space-y-4">
@@ -102,8 +107,8 @@ async function LeadsTab({
         <div>
           <h2 className="font-display text-xl font-semibold">All leads</h2>
           <p className="text-sm text-muted-foreground">
-            {scopedLeads.length} shown · unassigned, intern &amp; super admin
-            leads, and your own — assign to your team or to yourself.
+            {scopedLeads.length} shown · see everyone&apos;s work; only
+            unassigned, intern, and your own leads can be edited.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -117,6 +122,9 @@ async function LeadsTab({
         filterMembers={filterMembers}
         canAssign
         canDelete={false}
+        canEditLead={(lead: Lead) =>
+          canEditLead(session.profile.role, session.user.id, lead)
+        }
         basePath="/admin"
         searchParams={defaultSearch ?? {}}
       />

@@ -70,8 +70,8 @@ export async function fetchInterns(supabase: Db): Promise<Profile[]> {
 }
 
 /**
- * Active super admins. Admins may call this after the admin-sees-super-admin
- * policy is applied; their profile rows are readable through profiles_admin_select.
+ * Active super admins. Admins may call this too — their profile rows are
+ * readable through profiles_admin_select.
  */
 export async function fetchSuperAdmins(supabase: Db): Promise<Profile[]> {
   const { data, error } = await supabase
@@ -89,8 +89,8 @@ export async function fetchSuperAdmins(supabase: Db): Promise<Profile[]> {
 }
 
 /**
- * Active admins. Only super admins may call this — RLS blocks admins from
- * reading each other's profile rows.
+ * Active admins. Admins can read each other's rows too (so they can review
+ * each other's work); super admins always have full access.
  */
 export async function fetchAdmins(supabase: Db): Promise<Profile[]> {
   const { data, error } = await supabase

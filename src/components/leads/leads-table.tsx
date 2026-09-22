@@ -58,6 +58,7 @@ export function LeadsTable({
   basePath,
   searchParams,
   filterMembers,
+  canEditLead,
   emptyTitle = 'No leads found',
   emptyDescription = 'Try adjusting the filters, or add a new lead.',
 }: {
@@ -69,10 +70,13 @@ export function LeadsTable({
   searchParams: Record<string, string | string[] | undefined>;
   /** People shown in the "Assigned to" filter. Defaults to `members`. */
   filterMembers?: Array<{ id: string; full_name: string }>;
+  /** Per-lead gate for the assign menu (e.g. read-only leads). */
+  canEditLead?: (lead: Lead) => boolean;
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
   const filterOptions = filterMembers ?? members;
+  const isEditable = (lead: Lead) => (canEditLead ? canEditLead(lead) : true);
   const router = useRouter();
   const [page, setPage] = React.useState(0);
   const [query, setQuery] = React.useState('');
@@ -329,12 +333,12 @@ export function LeadsTable({
                           <DropdownMenuItem asChild>
                             <Link href={`/leads/${lead.id}`}>View details</Link>
                           </DropdownMenuItem>
-                          {canAssign && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuLabel className="text-xs">
-                                Assign to
-                              </DropdownMenuLabel>
+{canAssign && isEditable(lead) && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs">
+                Assign to
+              </DropdownMenuLabel>
                               <DropdownMenuItem
                                 onSelect={(e) => {
                                   e.preventDefault();
