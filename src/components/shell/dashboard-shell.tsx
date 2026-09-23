@@ -7,6 +7,7 @@ import {
   BarChart3,
   CalendarClock,
   LayoutDashboard,
+  Megaphone,
   Menu,
   Phone,
   Users,
@@ -44,6 +45,11 @@ function navFor(role: Role): NavItem[] {
         { label: 'My Work', href: '/super-admin?tab=my-work', icon: CalendarClock },
         { label: 'Team', href: '/super-admin?tab=team', icon: Users },
         { label: 'All Leads', href: '/super-admin?tab=leads', icon: Phone },
+        {
+          label: 'Outreacher',
+          href: '/super-admin?tab=outreacher',
+          icon: Megaphone,
+        },
         { label: 'Analytics', href: '/super-admin?tab=analytics', icon: BarChart3 },
       ];
     case 'admin':
@@ -61,6 +67,7 @@ function navFor(role: Role): NavItem[] {
           icon: Phone,
         },
         { label: 'Team', href: '/admin?tab=team', icon: Users },
+        { label: 'Outreacher', href: '/admin?tab=outreacher', icon: Megaphone },
         { label: 'Analytics', href: '/admin?tab=analytics', icon: BarChart3 },
       ];
     case 'intern':

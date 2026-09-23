@@ -27,6 +27,7 @@ import { CsvImportDialog } from '@/components/leads/csv-import-dialog';
 import { MyWorkSection } from '@/components/leads/my-work-section';
 import { AddUserDialog } from '@/components/team/add-user-dialog';
 import { UsersTable } from '@/components/team/users-table';
+import { OutreacherSection } from '@/components/outreach/outreacher-section';
 import { LeadsByStatusBreakdown } from '@/components/analytics/leads-by-status-breakdown';
 import {
   ConversionFunnel,
@@ -42,6 +43,7 @@ const TABS = [
   { key: 'my-work', label: 'My Work', href: '/super-admin?tab=my-work' },
   { key: 'team', label: 'Team', href: '/super-admin?tab=team' },
   { key: 'leads', label: 'All Leads', href: '/super-admin?tab=leads' },
+  { key: 'outreacher', label: 'Outreacher', href: '/super-admin?tab=outreacher' },
   { key: 'analytics', label: 'Analytics', href: '/super-admin?tab=analytics' },
 ];
 
@@ -67,6 +69,7 @@ export default async function SuperAdminPage({
       {tab === 'my-work' && <MyWorkTab />}
       {tab === 'team' && <TeamTab />}
       {tab === 'leads' && <LeadsTab defaultSearch={searchParams} />}
+      {tab === 'outreacher' && <OutreacherTab />}
       {tab === 'analytics' && <AnalyticsTab />}
     </div>
   );
@@ -263,6 +266,11 @@ async function LeadsTab({
       />
     </div>
   );
+}
+
+async function OutreacherTab() {
+  await requireRole(['super_admin']);
+  return <OutreacherSection />;
 }
 
 async function AnalyticsTab() {
