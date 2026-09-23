@@ -269,8 +269,8 @@ async function LeadsTab({
 }
 
 async function OutreacherTab() {
-  await requireRole(['super_admin']);
-  return <OutreacherSection />;
+  const session = await requireRole(['super_admin']);
+  return <OutreacherSection supabase={session.supabase} />;
 }
 
 async function AnalyticsTab() {

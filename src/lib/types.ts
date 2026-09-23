@@ -63,6 +63,21 @@ export interface LeadActivity {
   profiles?: Pick<Profile, 'id' | 'full_name' | 'role'> | null;
 }
 
+export interface OutreachContact {
+  id: string;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  company?: string | null;
+  platform?: string | null;
+  notes?: string | null;
+  last_connected_at?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by_profile?: Pick<Profile, 'id' | 'full_name' | 'role'> | null;
+}
+
 export interface Notification {
   id: string;
   user_id: string;

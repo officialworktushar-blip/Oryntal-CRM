@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { createClient } from '@/lib/supabase/server';
-import type { Lead, Profile } from '@/lib/types';
+import type { Lead, OutreachContact, Profile } from '@/lib/types';
 import { LEAD_STATUS_ORDER } from '@/lib/constants';
 
 export type Db = Awaited<ReturnType<typeof createClient>>;
@@ -15,6 +15,8 @@ export interface LeadFilters {
 }
 
 const LEAD_SELECT = `*, assigned_to_profile:profiles!leads_assigned_to_fkey(id, full_name, role), created_by_profile:profiles!leads_created_by_fkey(id, full_name, role)`;
+
+const OUTREACH_SELECT = `*, created_by_profile:profiles!outreach_contacts_created_by_fkey(id, full_name, role)`;
 
 export async function fetchLeads(
   supabase: Db,
@@ -52,6 +54,23 @@ export async function fetchAllLeads(supabase: Db): Promise<Lead[]> {
     return [];
   }
   return (data as Lead[]) ?? [];
+}
+
+export async function fetchOutreachContacts(
+  supabase: Db
+): Promise<OutreachContact[]> {
+  const { data, error } = await supabase
+    .from('outreach_contacts')
+    .select(OUTREACH_SELECT)
+    .order('last_connected_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(500);
+
+  if (error) {
+    console.error('fetchOutreachContacts error:', error);
+    return [];
+  }
+  return (data as OutreachContact[]) ?? [];
 }
 
 export async function fetchInterns(supabase: Db): Promise<Profile[]> {

@@ -61,4 +61,17 @@ export const LEAD_SOURCES = [
   'Other',
 ];
 
+export const OUTREACH_PLATFORMS = [
+  'LinkedIn',
+  'Cold Email',
+  'WhatsApp',
+  'Call',
+  'Instagram',
+  'Upwork',
+  'X (Twitter)',
+  'Referral',
+  'Event',
+  'Other',
+];
+
 export const CSV_TEMPLATE_HEADERS = ['name', 'phone', 'email', 'company', 'source'];
