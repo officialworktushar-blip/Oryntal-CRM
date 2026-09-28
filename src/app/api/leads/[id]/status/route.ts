@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { LEAD_VIEW_ONLY_MESSAGE, loadLeadAccess } from '@/lib/lead-access';
 import type { LeadStatus } from '@/lib/types';
 import type { Db } from '@/lib/queries';
 
 /**
  * Updates a lead status and records the status_change activity.
+ *
+ * Guarded by `canEditLead` (super admins edit anything; admins edit unassigned,
+ * their own and intern leads; interns edit their own) so this endpoint agrees
+ * with the lead detail page's "View only" banner.
  *
  * Primary path: the `update_lead_status` RPC (atomic, RLS applies inside via
  * security invoker). If PostgREST can't resolve the function (PGRST202 — the
@@ -26,6 +31,17 @@ export async function POST(
   const body = (await request.json()) as { status?: LeadStatus; note?: string };
   if (!body.status) {
     return NextResponse.json({ error: 'Missing status.' }, { status: 400 });
+  }
+
+  const access = await loadLeadAccess(supabase, user.id, params.id);
+  if (!access.role) {
+    return NextResponse.json({ error: 'Your account is not active.' }, { status: 403 });
+  }
+  if (!access.lead) {
+    return NextResponse.json({ error: 'Lead not found.' }, { status: 404 });
+  }
+  if (!access.canEdit) {
+    return NextResponse.json({ error: LEAD_VIEW_ONLY_MESSAGE }, { status: 403 });
   }
 
   const { error } = await supabase.rpc('update_lead_status', {

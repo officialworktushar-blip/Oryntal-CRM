@@ -1,9 +1,19 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { DASHBOARD_PATH, type Role } from '@/lib/types';
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
-const PROTECTED_ROUTES = ['/super-admin', '/admin', '/intern'];
+/**
+ * Dashboard route → the role allowed in it. The route segment is not always the
+ * role name ('/super-admin' vs the 'super_admin' role), so the pairing is
+ * declared explicitly instead of derived from the path.
+ */
+const PROTECTED_ROUTES: Array<{ prefix: string; role: Role }> = [
+  { prefix: '/super-admin', role: 'super_admin' },
+  { prefix: '/admin', role: 'admin' },
+  { prefix: '/intern', role: 'intern' },
+];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -57,7 +67,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Resolve the user's role (active profile row only).
-  let role: string | null = null;
+  let role: Role | null = null;
   if (user) {
     const { data } = await supabase
       .from('profiles')
@@ -65,30 +75,23 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .maybeSingle();
     if (data && (data as { is_active: boolean }).is_active) {
-      role = (data as { role: string }).role;
+      role = (data as { role: Role }).role;
     }
   }
 
-  const isProtected = PROTECTED_ROUTES.some((r) =>
-    pathname.startsWith(r)
-  );
+  const dashboard = role ? DASHBOARD_PATH[role] : '/login';
+
+  const protectedRoute = PROTECTED_ROUTES.find((r) => pathname.startsWith(r.prefix));
 
   // Signed in but visiting /login or / → send to their dashboard.
   if (pathname === '/login' || pathname === '/') {
     if (!role) return response; // edge: profile missing, let them see login
-    return NextResponse.redirect(new URL(`/${role}`, request.url));
+    return NextResponse.redirect(new URL(dashboard, request.url));
   }
 
   // Role-scoped route access.
-  if (isProtected) {
-    const routeOwner = PROTECTED_ROUTES.find((r) =>
-      pathname.startsWith(r)
-    )!;
-    const expectedRole = routeOwner.slice(1); // '/admin' → 'admin'
-    if (role !== expectedRole) {
-      const target = role ? `/${role}` : '/login';
-      return NextResponse.redirect(new URL(target, request.url));
-    }
+  if (protectedRoute && role !== protectedRoute.role) {
+    return NextResponse.redirect(new URL(dashboard, request.url));
   }
 
   return response;

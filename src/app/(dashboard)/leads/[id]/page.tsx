@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { getAuthSession } from '@/lib/auth';
 import { canEditLead } from '@/lib/assign';
+import { LEAD_VIEW_ONLY_MESSAGE } from '@/lib/lead-access';
 import type { Lead, LeadActivity } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -239,8 +240,7 @@ export default async function LeadDetailPage({
                   View only
                 </p>
                 <p className="mt-0.5 text-amber-800/80">
-                  This lead is owned by another admin or a super admin. You can
-                  review it but not change its status or log activities.
+                  {LEAD_VIEW_ONLY_MESSAGE}
                 </p>
               </div>
             </div>

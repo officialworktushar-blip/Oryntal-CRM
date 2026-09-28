@@ -18,6 +18,26 @@ const LEAD_SELECT = `*, assigned_to_profile:profiles!leads_assigned_to_fkey(id, 
 
 const OUTREACH_SELECT = `*, created_by_profile:profiles!outreach_contacts_created_by_fkey(id, full_name, role)`;
 
+export const OUTREACH_SETUP_HINT =
+  'Run supabase/migrations/20260928000000_ensure_outreach_contacts.sql against the database, then reload the page.';
+
+/**
+ * PostgREST reports an unknown/unexposed table as PGRST205 (absent from the
+ * schema cache) or 42P01 (unknown to the search_path). Both mean the outreach
+ * migration has not been applied, which is worth saying plainly.
+ */
+export function friendlyOutreachError(error: { code?: string; message: string }): string {
+  const missing =
+    error.code === 'PGRST205' ||
+    error.code === '42P01' ||
+    /schema cache|does not exist/i.test(error.message);
+
+  if (missing) {
+    return `The outreach_contacts table is missing from the database. ${OUTREACH_SETUP_HINT}`;
+  }
+  return error.message;
+}
+
 export async function fetchLeads(
   supabase: Db,
   filters: LeadFilters = {}
@@ -67,8 +87,10 @@ export async function fetchOutreachContacts(
     .limit(500);
 
   if (error) {
+    // Thrown rather than swallowed: an empty list is indistinguishable from
+    // "no contacts yet", which hides a missing table (PostgREST PGRST205/42P01).
     console.error('fetchOutreachContacts error:', error);
-    return [];
+    throw new Error(friendlyOutreachError(error));
   }
   return (data as OutreachContact[]) ?? [];
 }

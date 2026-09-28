@@ -235,15 +235,17 @@ function OutreachContactForm({
 export function AddOutreachContactDialog({
   variant = 'gold',
   className,
+  disabled = false,
 }: {
   variant?: 'default' | 'outline' | 'gold';
   className?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={variant} className={className}>
+        <Button variant={variant} className={className} disabled={disabled}>
           <Plus className="h-4 w-4" />
           Add Contact
         </Button>

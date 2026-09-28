@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { friendlyOutreachError } from '@/lib/queries';
 import type { Role } from '@/lib/types';
 
 async function assertAdmin() {
@@ -76,7 +77,7 @@ export async function PATCH(
     .eq('id', params.id);
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 400 });
+    return NextResponse.json({ error: friendlyOutreachError(updateError) }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });
@@ -95,7 +96,7 @@ export async function DELETE(
     .eq('id', params.id);
 
   if (deleteError) {
-    return NextResponse.json({ error: deleteError.message }, { status: 400 });
+    return NextResponse.json({ error: friendlyOutreachError(deleteError) }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });

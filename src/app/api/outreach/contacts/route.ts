@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { friendlyOutreachError } from '@/lib/queries';
 import type { Role } from '@/lib/types';
 
 export async function POST(request: Request) {
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: friendlyOutreachError(error) }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true, id: data.id });

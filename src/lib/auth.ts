@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { redirect } from 'next/navigation';
+import { DASHBOARD_PATH } from '@/lib/types';
 import type { Profile, Role } from '@/lib/types';
 import { createClient } from '@/lib/supabase/server';
 
@@ -43,14 +44,15 @@ export async function getAuthSession(): Promise<AuthSession | null> {
 /**
  * Server-side guard for dashboard routes. Redirects to /login when the user
  * is not authenticated and to the role-appropriate dashboard when they lack
- * access to the current route.
+ * access to the current route. DASHBOARD_PATH maps the stored role onto its
+ * route — 'super_admin' lives at '/super-admin', not '/super_admin'.
  */
 export async function requireRole(roles: Role[]) {
   const session = await getAuthSession();
   if (!session) redirect('/login');
 
   if (!roles.includes(session.profile.role)) {
-    redirect(`/${session.profile.role}`);
+    redirect(DASHBOARD_PATH[session.profile.role] ?? '/login');
   }
 
   return session;
